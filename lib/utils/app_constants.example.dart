@@ -1,0 +1,1 @@
+const String stripeSecretKey = 'YOUR_SECRET_KEY_HERE';
