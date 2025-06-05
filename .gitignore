@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ignore secrets file
+lib/utils/app_constants.dart
+lib/functions/index.js
