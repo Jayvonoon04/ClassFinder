@@ -44,6 +44,15 @@ class _CreateClassState extends State<CreateClass> {
       lastDate: DateTime(2101),
     );
     if (picked != null) {
+      final today = DateTime.now();
+      final selected = DateTime(picked.year, picked.month, picked.day);
+      final current = DateTime(today.year, today.month, today.day);
+
+      if (selected.isBefore(current)) {
+        _showError("Cannot select a past date");
+        return;
+      }
+
       dateController.text = '${picked.day}-${picked.month}-${picked.year}';
     }
   }

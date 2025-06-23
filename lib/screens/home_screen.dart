@@ -4,7 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:intl/intl.dart'; // <-- Added for date parsing
+import 'package:classfinder_f/utils/app_constants.dart';
 import 'class_detail_screen.dart';
 import 'package:classfinder_f/screens/self_class_detail.dart';
 import 'package:classfinder_f/app_bar.dart';
@@ -24,10 +25,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadQuote(); // Load the quote when screen initializes
+    _loadQuote();
   }
 
-  // Fetch quote from API Ninjas
   Future<void> _loadQuote() async {
     final quote = await fetchRandomQuote();
     if (mounted) {
@@ -37,10 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // API call to get a random quote
   Future<Map<String, dynamic>?> fetchRandomQuote() async {
     const apiUrl = 'https://api.api-ninjas.com/v1/quotes';
-    const apiKey = 'LPJ4A86ZchaOU9KKNhOsKg==95wlUuVwEU2bEtfK';
 
     try {
       final response = await http.get(
@@ -73,8 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               CustomAppBar(),
               const SizedBox(height: 20),
-
-              // Header for quote section
               const Text(
                 "Quotes for You",
                 style: TextStyle(
@@ -84,8 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-
-              // Display quote
               if (_quote != null) ...[
                 Container(
                   width: double.infinity,
@@ -125,8 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 30),
               ],
-
-              // Class sections
               _buildSection("Other Users' Classes", _buildOtherUsersClasses()),
               const SizedBox(height: 20),
               _buildSection("Classes You've Booked", _buildBookedClasses()),
@@ -140,7 +132,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Section title + content widget
   Widget _buildSection(String title, Widget content) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Stream for other users' classes
   Widget _buildOtherUsersClasses() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -169,13 +159,26 @@ class _HomeScreenState extends State<HomeScreen> {
           .snapshots(),
       builder: (_, snapshot) {
         if (!snapshot.hasData) return _loadingIndicator();
-        final docs = snapshot.data!.docs;
+
+        final docs = snapshot.data!.docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final dateStr = data['date'] ?? '';
+          try {
+            final classDate = DateFormat('d-M-yyyy').parse(dateStr);
+            final today = DateTime.now();
+            return !classDate.isBefore(
+              DateTime(today.year, today.month, today.day),
+            );
+          } catch (_) {
+            return false;
+          }
+        }).toList();
+
         return _buildHorizontalClassList(docs, isCreatedByUser: false);
       },
     );
   }
 
-  // Stream for booked classes
   Widget _buildBookedClasses() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -190,7 +193,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Stream for user's own created classes
   Widget _buildUserCreatedClasses() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -205,7 +207,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Builds horizontal class card list
   Widget _buildHorizontalClassList(List<QueryDocumentSnapshot> docs,
       {required bool isCreatedByUser}) {
     if (docs.isEmpty) {
@@ -300,7 +301,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Loading spinner for async data
   Widget _loadingIndicator() {
     return const Center(child: CircularProgressIndicator());
   }
