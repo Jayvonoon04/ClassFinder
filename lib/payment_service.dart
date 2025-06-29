@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,7 +5,6 @@ import 'package:classfinder_f/utils/app_constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 class PaymentService {
@@ -15,7 +13,8 @@ class PaymentService {
 
   static Map<String, dynamic>? paymentIntentData;
 
-  static Future<void> makePayment(
+  /// Main payment entry point, returns true if payment succeeds.
+  static Future<bool> makePayment(
       BuildContext context, {
         required String amount,
         required String eventId,
@@ -34,16 +33,19 @@ class PaymentService {
         ),
       );
 
-      await _displayPaymentSheet(context, eventId);
+      return await _displayPaymentSheet(context, eventId);
     } catch (e) {
       debugPrint('Exception during makePayment: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Payment failed: ${e.toString()}")),
       );
+      return false;
     }
   }
 
-  static Future<void> _displayPaymentSheet(
+  /// Displays payment sheet, updates Firestore if successful.
+  /// Returns true if payment was successful.
+  static Future<bool> _displayPaymentSheet(
       BuildContext context,
       String eventId,
       ) async {
@@ -53,7 +55,6 @@ class PaymentService {
       final userId = _auth.currentUser!.uid;
       final userEmail = _auth.currentUser!.email ?? '';
 
-      // Get class details
       final classSnapshot =
       await _firestore.collection('classes').doc(eventId).get();
       final classData = classSnapshot.data();
@@ -61,13 +62,13 @@ class PaymentService {
       final String classTitle = classData?['title'] ?? 'a class';
       final String imageBase64 = classData?['image_base64'] ?? '';
 
-      // Update 'joined' and 'max_entries'
+      /// Update 'joined' array and decrement 'max_entries'
       await _firestore.collection('classes').doc(eventId).set({
         'joined': FieldValue.arrayUnion([userId]),
         'max_entries': FieldValue.increment(-1),
       }, SetOptions(merge: true));
 
-      // Record booking
+      /// Record booking
       await _firestore.collection('booking').doc(eventId).set({
         'booking': FieldValue.arrayUnion([
           {
@@ -79,7 +80,7 @@ class PaymentService {
         ])
       }, SetOptions(merge: true));
 
-      // Add notification
+      /// Add notification
       await _firestore
           .collection('notifications')
           .doc(userId)
@@ -97,20 +98,24 @@ class PaymentService {
 
       paymentIntentData = null;
 
-      Timer(const Duration(seconds: 2), () {
-        Get.back();
-      });
+      return true; // Indicate success
     } on StripeException catch (e) {
       debugPrint('StripeException: $e');
       showDialog(
         context: context,
         builder: (_) => const AlertDialog(content: Text("Payment cancelled")),
       );
+      return false;
     } catch (e) {
       debugPrint('PaymentSheet Exception: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Payment failed unexpectedly.")),
+      );
+      return false;
     }
   }
 
+  /// Creates payment intent with Stripe and returns its data
   static Future<Map<String, dynamic>?> _createPaymentIntent(
       String amount,
       String currency,

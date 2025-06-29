@@ -1,8 +1,8 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:classfinder_f/payment_service.dart';
+import 'package:classfinder_f/screens/home_screen.dart'; // import HomeScreen for navigation
 
 class Checkout extends StatefulWidget {
   final DocumentSnapshot? eventDoc;
@@ -14,16 +14,17 @@ class Checkout extends StatefulWidget {
 }
 
 class _CheckoutState extends State<Checkout> {
-  int selectedRadio = -1; // none selected initially
-  Image? eventImageWidget;
-  bool isLoading = false;
+  int selectedRadio = -1; // payment method selection (-1 = none)
+  Image? eventImageWidget; // holds decoded event image
+  bool isLoading = false; // loading state during payment
 
   @override
   void initState() {
     super.initState();
-    _loadImage();
+    _loadImage(); // decode base64 image on load
   }
 
+  /// Decodes base64 image stored in Firestore to display in checkout card.
   void _loadImage() {
     try {
       final data = widget.eventDoc!.data() as Map<String, dynamic>;
@@ -49,22 +50,27 @@ class _CheckoutState extends State<Checkout> {
     }
   }
 
+  /// Updates payment method selection state.
   void setSelectedRadio(int val) {
     setState(() {
       selectedRadio = val;
     });
   }
 
-  Widget customText(String text,
-      {double fontSize = 14,
+  /// Reusable styled text widget.
+  Widget customText(
+      String text, {
+        double fontSize = 14,
         FontWeight fontWeight = FontWeight.normal,
-        Color color = Colors.black}) {
+        Color color = Colors.black,
+      }) {
     return Text(
       text,
       style: TextStyle(fontSize: fontSize, fontWeight: fontWeight, color: color),
     );
   }
 
+  /// Promo code text field placeholder (non-functional for now).
   Widget textField({required String hint}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -90,6 +96,8 @@ class _CheckoutState extends State<Checkout> {
     final date = data['date'] ?? '';
     final startTime = data['start_time'] ?? '';
     final endTime = data['end_time'] ?? '';
+
+    // Parse price safely
     final priceRaw = data['price'];
     double price = 0.0;
     if (priceRaw is int) {
@@ -99,7 +107,7 @@ class _CheckoutState extends State<Checkout> {
     } else if (priceRaw is String) {
       price = double.tryParse(priceRaw) ?? 0.0;
     }
-    const double fixedFee = 2.0;
+    const double fixedFee = 2.0; // App fee
     final double total = price + fixedFee;
 
     return Scaffold(
@@ -110,7 +118,7 @@ class _CheckoutState extends State<Checkout> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              /// ------------------------ Header Section ------------------------
               Row(
                 children: [
                   GestureDetector(
@@ -127,17 +135,14 @@ class _CheckoutState extends State<Checkout> {
                   const Spacer(),
                   const Text(
                     'Checkout',
-                    style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
                   ),
                   const Spacer(flex: 2),
                 ],
               ),
               const SizedBox(height: 28),
 
-              // Event Card
+              /// ------------------------ Event Card Section ------------------------
               Container(
                 width: double.infinity,
                 height: 150,
@@ -145,11 +150,7 @@ class _CheckoutState extends State<Checkout> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
+                    BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
                   ],
                 ),
                 child: Row(
@@ -163,55 +164,32 @@ class _CheckoutState extends State<Checkout> {
                         width: 120,
                         height: 150,
                         color: Colors.grey[200],
-                        child: eventImageWidget ??
-                            Image.asset('assets/placeholder.png',
-                                fit: BoxFit.cover),
+                        child: eventImageWidget ?? Image.asset('assets/placeholder.png', fit: BoxFit.cover),
                       ),
                     ),
                     Expanded(
                       child: Padding(
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            customText(
-                              title,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            ),
+                            customText(title, fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
                             const SizedBox(height: 8),
-                            customText(
-                              description,
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
+                            customText(description, fontSize: 14, color: Colors.black54),
                             const Spacer(),
                             Row(
                               children: [
-                                const Icon(Icons.calendar_today_outlined,
-                                    size: 16, color: Colors.blueGrey),
+                                const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.blueGrey),
                                 const SizedBox(width: 6),
-                                customText(
-                                  date,
-                                  fontSize: 13,
-                                  color: Colors.blueAccent,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                customText(date, fontSize: 13, color: Colors.blueAccent, fontWeight: FontWeight.w600),
                               ],
                             ),
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                const Icon(Icons.access_time_outlined,
-                                    size: 16, color: Colors.blueGrey),
+                                const Icon(Icons.access_time_outlined, size: 16, color: Colors.blueGrey),
                                 const SizedBox(width: 6),
-                                customText(
-                                  '$startTime - $endTime',
-                                  fontSize: 13,
-                                  color: Colors.black54,
-                                ),
+                                customText('$startTime - $endTime', fontSize: 13, color: Colors.black54),
                               ],
                             ),
                           ],
@@ -221,15 +199,11 @@ class _CheckoutState extends State<Checkout> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 40),
 
-              // Payment Methods Title
-              customText('Payment Method',
-                  fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+              /// ------------------------ Payment Method Section ------------------------
+              customText('Payment Method', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
               const SizedBox(height: 16),
-
-              // Payment Options List
               Column(
                 children: [
                   paymentOptionRow(Icons.credit_card, 'Credit Card', 0),
@@ -237,35 +211,26 @@ class _CheckoutState extends State<Checkout> {
                   paymentOptionRow(Icons.account_balance_wallet, 'PayPal', 2),
                 ],
               ),
-
               const SizedBox(height: 40),
 
-              // Promo Code TextField
-              customText('Promo Code',
-                  fontWeight: FontWeight.bold, fontSize: 16),
+              /// ------------------------ Promo Code Placeholder ------------------------
+              customText('Promo Code', fontWeight: FontWeight.bold, fontSize: 16),
               const SizedBox(height: 12),
               textField(hint: 'Enter promo code'),
-
               const SizedBox(height: 40),
 
-              // Total Payment Row
+              /// ------------------------ Total Payment Display ------------------------
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  customText('Total Payment',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.black87),
+                  customText('Total Payment', fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black87),
                   customText('\$${total.toStringAsFixed(2)}',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.green[700]!),
+                      fontWeight: FontWeight.bold, fontSize: 20, color: Colors.green[700]!),
                 ],
               ),
-
               const SizedBox(height: 30),
 
-              // Make Payment Button
+              /// ------------------------ Make Payment Button ------------------------
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -288,11 +253,19 @@ class _CheckoutState extends State<Checkout> {
 
                     if (selectedRadio == 0) {
                       // Credit Card → Use Stripe
-                      await PaymentService.makePayment(
+                      bool success = await PaymentService.makePayment(
                         context,
                         amount: priceString,
                         eventId: eventId,
                       );
+
+                      if (success && context.mounted) {
+                        // ✅ Navigate back to HomeScreen after successful payment
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const HomeScreen()),
+                              (route) => false,
+                        );
+                      }
                     } else if (selectedRadio == 1) {
                       // Apple Pay → Not configured
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -308,11 +281,8 @@ class _CheckoutState extends State<Checkout> {
                     setState(() => isLoading = false);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                    selectedRadio == -1 || isLoading ? Colors.grey : Colors.blueAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                    backgroundColor: selectedRadio == -1 || isLoading ? Colors.grey : Colors.blueAccent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 6,
                   ),
                   child: isLoading
@@ -330,6 +300,7 @@ class _CheckoutState extends State<Checkout> {
     );
   }
 
+  /// Builds a selectable payment option row with icon, label, and radio.
   Widget paymentOptionRow(IconData iconData, String label, int val) {
     final selected = selectedRadio == val;
     return InkWell(
@@ -347,7 +318,7 @@ class _CheckoutState extends State<Checkout> {
           boxShadow: selected
               ? [
             BoxShadow(
-              color: Colors.blueAccent.withOpacity(0.2),
+              color: const Color(0xFF448AFF).withOpacity(0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )

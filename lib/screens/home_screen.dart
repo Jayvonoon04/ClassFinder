@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart'; // <-- Added for date parsing
+import 'package:intl/intl.dart';
 import 'package:classfinder_f/utils/app_constants.dart';
 import 'class_detail_screen.dart';
 import 'package:classfinder_f/screens/self_class_detail.dart';
@@ -25,9 +25,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadQuote();
+    _loadQuote(); // Load a random quote upon screen initialization
   }
 
+  /// Loads a random quote from API Ninjas
   Future<void> _loadQuote() async {
     final quote = await fetchRandomQuote();
     if (mounted) {
@@ -37,15 +38,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Fetches a random motivational quote using API Ninjas
   Future<Map<String, dynamic>?> fetchRandomQuote() async {
     const apiUrl = 'https://api.api-ninjas.com/v1/quotes';
-
     try {
       final response = await http.get(
         Uri.parse(apiUrl),
         headers: {'X-Api-Key': apiKey},
       );
-
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.isNotEmpty ? data.first : null;
@@ -69,8 +69,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CustomAppBar(),
+              CustomAppBar(), // Custom top app bar
               const SizedBox(height: 20),
+
+              // Header for Quotes Section
               const Text(
                 "Quotes for You",
                 style: TextStyle(
@@ -80,6 +82,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 10),
+
+              // Displays the fetched quote
               if (_quote != null) ...[
                 Container(
                   width: double.infinity,
@@ -119,10 +123,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 30),
               ],
-              _buildSection("Other Users' Classes", _buildOtherUsersClasses()),
-              const SizedBox(height: 20),
+
+              // Booked Classes Section
               _buildSection("Classes You've Booked", _buildBookedClasses()),
               const SizedBox(height: 20),
+
+              // User Created Classes Section
               _buildSection("Your Created Classes", _buildUserCreatedClasses()),
               const SizedBox(height: 20),
             ],
@@ -132,6 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Helper to display section title with its content
   Widget _buildSection(String title, Widget content) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,35 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildOtherUsersClasses() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('classes')
-          .where('created_by', isNotEqualTo: currentUserEmail)
-          .orderBy('created_by')
-          .snapshots(),
-      builder: (_, snapshot) {
-        if (!snapshot.hasData) return _loadingIndicator();
-
-        final docs = snapshot.data!.docs.where((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          final dateStr = data['date'] ?? '';
-          try {
-            final classDate = DateFormat('d-M-yyyy').parse(dateStr);
-            final today = DateTime.now();
-            return !classDate.isBefore(
-              DateTime(today.year, today.month, today.day),
-            );
-          } catch (_) {
-            return false;
-          }
-        }).toList();
-
-        return _buildHorizontalClassList(docs, isCreatedByUser: false);
-      },
-    );
-  }
-
+  /// Displays classes that the user has booked
   Widget _buildBookedClasses() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -193,6 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Displays classes that the user has created
   Widget _buildUserCreatedClasses() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -207,6 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Builds horizontal scrolling cards for classes
   Widget _buildHorizontalClassList(List<QueryDocumentSnapshot> docs,
       {required bool isCreatedByUser}) {
     if (docs.isEmpty) {
@@ -259,17 +240,17 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Class image
                   ClipRRect(
-                    borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(18)),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
                     child: SizedBox(
                       height: 120,
                       width: double.infinity,
                       child: image ??
-                          Image.asset('assets/placeholder.png',
-                              fit: BoxFit.cover),
+                          Image.asset('assets/placeholder.png', fit: BoxFit.cover),
                     ),
                   ),
+                  // Class details
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: Column(
@@ -301,6 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Loading indicator during Firestore data fetching
   Widget _loadingIndicator() {
     return const Center(child: CircularProgressIndicator());
   }
