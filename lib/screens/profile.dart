@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+/// View and edit user profile screen
 class ViewProfileScreen extends StatefulWidget {
   const ViewProfileScreen({Key? key}) : super(key: key);
 
@@ -18,18 +19,20 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
   bool _isLoading = true;
   bool _isEditing = false;
 
-  // User info fields
+  // User info fields fetched from Firestore
   String? _firstName;
   String? _lastName;
   String? _mobile;
   String? _gender;
   String? _profileImagePath;
 
+  // Controllers for editing
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _mobileController;
   String? _editedGender;
 
+  // Profile image as local file
   File? _profileImageFile;
 
   final _auth = FirebaseAuth.instance;
@@ -38,9 +41,10 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadUserData(); // Load profile on initialization
   }
 
+  /// Load user data from Firestore to populate the profile
   Future<void> _loadUserData() async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -64,6 +68,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
         _mobileController = TextEditingController(text: _mobile);
         _editedGender = _gender;
 
+        // If an image path exists, prepare the local file
         if (_profileImagePath != null && _profileImagePath!.isNotEmpty) {
           _profileImageFile = File(_profileImagePath!);
         }
@@ -79,6 +84,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     }
   }
 
+  /// Pick profile image from gallery
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -90,6 +96,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     }
   }
 
+  /// Save profile edits to Firestore
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -112,6 +119,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
         'updated_at': FieldValue.serverTimestamp(),
       });
 
+      // Update local state for viewing mode
       setState(() {
         _firstName = _firstNameController.text.trim();
         _lastName = _lastNameController.text.trim();
@@ -128,12 +136,14 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     }
   }
 
+  /// Display error SnackBar
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: Colors.red),
     );
   }
 
+  /// Display success SnackBar
   void _showSuccess(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: Colors.green),
@@ -179,6 +189,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     );
   }
 
+  /// Profile viewing mode UI
   Widget _buildProfileView() {
     return Card(
       elevation: 4,
@@ -187,6 +198,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
         padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
         child: Column(
           children: [
+            // Profile avatar
             CircleAvatar(
               radius: 60,
               backgroundImage: _profileImageFile != null ? FileImage(_profileImageFile!) : null,
@@ -206,6 +218,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     );
   }
 
+  /// Row displaying label and value in viewing mode
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -228,6 +241,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     );
   }
 
+  /// Profile editing mode UI
   Widget _buildEditForm() {
     return Form(
       key: _formKey,
@@ -238,6 +252,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
           padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
           child: Column(
             children: [
+              // Editable profile image
               InkWell(
                 onTap: _pickImage,
                 borderRadius: BorderRadius.circular(60),
@@ -253,7 +268,9 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
               const SizedBox(height: 30),
               _buildTextField(_firstNameController, 'First Name', 'First name is required'),
               _buildTextField(_lastNameController, 'Last Name', 'Last name is required'),
-              _buildTextField(_mobileController, 'Mobile Number', 'Mobile number is required', inputType: TextInputType.phone),
+              _buildTextField(
+                  _mobileController, 'Mobile Number', 'Mobile number is required',
+                  inputType: TextInputType.phone),
               _buildGenderDropdown(),
             ],
           ),
@@ -262,6 +279,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     );
   }
 
+  /// Reusable text field for editing
   Widget _buildTextField(
       TextEditingController controller,
       String hint,
@@ -285,6 +303,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     );
   }
 
+  /// Gender dropdown for editing
   Widget _buildGenderDropdown() {
     final genders = ['Male', 'Female', 'Other'];
 

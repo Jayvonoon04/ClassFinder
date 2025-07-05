@@ -1,10 +1,10 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeAgo;
 
+/// Displays user-specific notifications using Firestore streaming.
 class UserNotificationScreen extends StatefulWidget {
   const UserNotificationScreen({super.key});
 
@@ -26,6 +26,8 @@ class _UserNotificationScreenState extends State<UserNotificationScreen> {
       body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         color: Colors.grey[200],
+
+        /// Listens to Firestore 'myNotifications' subcollection for the current user
         child: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('notifications')
@@ -52,18 +54,16 @@ class _UserNotificationScreenState extends State<UserNotificationScreen> {
                 String image = '';
                 DateTime date = DateTime.now();
 
+                /// Safely extract fields with fallbacks
                 try {
                   name = data[i].get('name');
                 } catch (_) {}
-
                 try {
                   title = data[i].get('message');
                 } catch (_) {}
-
                 try {
                   image = data[i].get('image');
                 } catch (_) {}
-
                 try {
                   date = data[i].get('time').toDate();
                 } catch (_) {}
@@ -77,6 +77,11 @@ class _UserNotificationScreenState extends State<UserNotificationScreen> {
     );
   }
 
+  /// Builds each notification tile with:
+  /// - Circular avatar (base64 decoded if available)
+  /// - Name
+  /// - Message
+  /// - Time ago
   Widget _buildNotificationTile(
       String name, String title, DateTime time, String imageBase64) {
     return Column(
@@ -98,6 +103,7 @@ class _UserNotificationScreenState extends State<UserNotificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  /// Name
                   Text(
                     name,
                     style: const TextStyle(
@@ -105,6 +111,7 @@ class _UserNotificationScreenState extends State<UserNotificationScreen> {
                       fontSize: 15,
                     ),
                   ),
+                  /// Notification message
                   Text(
                     title,
                     style: const TextStyle(fontSize: 13),
@@ -114,6 +121,7 @@ class _UserNotificationScreenState extends State<UserNotificationScreen> {
             ),
           ],
         ),
+        /// Time ago (e.g., "5 minutes ago")
         Padding(
           padding: const EdgeInsets.only(left: 65, top: 5),
           child: Text(

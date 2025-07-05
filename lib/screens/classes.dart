@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'class_detail_screen.dart';
 
+/// Displays all upcoming classes created by other users (not the current user).
+/// Pulls data live from Firestore, filtering for upcoming classes.
 class Classes extends StatefulWidget {
   const Classes({super.key});
 
@@ -13,8 +15,8 @@ class Classes extends StatefulWidget {
 }
 
 class _ClassesState extends State<Classes> {
-  String currentUserEmail = '';
-  final Map<String, String> _emailNameCache = {}; // Cache of email -> full name
+  String currentUserEmail = ''; // Stores current user's email
+  final Map<String, String> _emailNameCache = {}; // Cache email -> full name for instructors
 
   @override
   void initState() {
@@ -25,6 +27,8 @@ class _ClassesState extends State<Classes> {
     }
   }
 
+  /// Retrieves the full name of a user by their email.
+  /// Uses Firestore and caches results for efficiency.
   Future<String> _getUserName(String email) async {
     if (_emailNameCache.containsKey(email)) {
       return _emailNameCache[email]!;
@@ -36,7 +40,7 @@ class _ClassesState extends State<Classes> {
         .limit(1)
         .get();
 
-    String fullName = email; // fallback to email if name not found
+    String fullName = email; // fallback to email if user not found
 
     if (snapshot.docs.isNotEmpty) {
       final data = snapshot.docs.first.data();
@@ -68,6 +72,7 @@ class _ClassesState extends State<Classes> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
+            // Show loading indicator while fetching data
             return const Center(
               child: CircularProgressIndicator(color: Colors.blueAccent),
             );
@@ -81,6 +86,9 @@ class _ClassesState extends State<Classes> {
             return const Center(child: Text("No classes available 📭"));
           }
 
+          // Filter out:
+          // - classes created by current user
+          // - past classes
           final classDocs = snapshot.data!.docs.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
             if (data['created_by'] == currentUserEmail) return false;
@@ -93,7 +101,7 @@ class _ClassesState extends State<Classes> {
                 DateTime(today.year, today.month, today.day),
               );
             } catch (_) {
-              return false;
+              return false; // skip invalid dates
             }
           }).toList();
 
@@ -116,16 +124,18 @@ class _ClassesState extends State<Classes> {
               final createdByEmail = data['created_by'] ?? '';
               final imageBase64 = data['image_base64'] ?? '';
 
+              // Decode base64 class image if available
               ImageProvider? imageProvider;
               if (imageBase64.isNotEmpty) {
                 try {
                   final imageBytes = base64Decode(imageBase64);
                   imageProvider = MemoryImage(imageBytes);
                 } catch (e) {
-                  imageProvider = null;
+                  imageProvider = null; // fallback to no image on error
                 }
               }
 
+              // Get instructor name asynchronously using FutureBuilder
               return FutureBuilder<String>(
                 future: _getUserName(createdByEmail),
                 builder: (context, snapshotName) {
@@ -133,6 +143,7 @@ class _ClassesState extends State<Classes> {
 
                   return GestureDetector(
                     onTap: () {
+                      // Navigate to ClassDetailScreen when tapped
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -156,6 +167,7 @@ class _ClassesState extends State<Classes> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Display class image if available
                           if (imageProvider != null)
                             ClipRRect(
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -171,6 +183,7 @@ class _ClassesState extends State<Classes> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Class title
                                 Text(
                                   title,
                                   style: const TextStyle(
@@ -180,6 +193,8 @@ class _ClassesState extends State<Classes> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
+
+                                // Description (max 2 lines)
                                 Text(
                                   description,
                                   style: const TextStyle(color: Colors.black87),
@@ -187,6 +202,8 @@ class _ClassesState extends State<Classes> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 12),
+
+                                // Date
                                 Row(
                                   children: [
                                     const Icon(Icons.date_range, size: 18, color: Colors.grey),
@@ -195,6 +212,8 @@ class _ClassesState extends State<Classes> {
                                   ],
                                 ),
                                 const SizedBox(height: 4),
+
+                                // Time
                                 Row(
                                   children: [
                                     const Icon(Icons.access_time, size: 18, color: Colors.grey),
@@ -206,6 +225,8 @@ class _ClassesState extends State<Classes> {
                                   ],
                                 ),
                                 const SizedBox(height: 4),
+
+                                // Instructor name
                                 Row(
                                   children: [
                                     const Icon(Icons.person, size: 18, color: Colors.grey),

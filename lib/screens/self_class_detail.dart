@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+/// Displays details for a class created by the current user,
+/// showing instructor info, class info, and a decoded image.
 class SelfClassDetailScreen extends StatefulWidget {
   final DocumentSnapshot classDoc;
 
@@ -12,15 +14,16 @@ class SelfClassDetailScreen extends StatefulWidget {
 }
 
 class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
-  Map<String, dynamic>? userData;
-  bool loadingUser = true;
+  Map<String, dynamic>? userData; // Stores instructor data from Firestore
+  bool loadingUser = true; // Loading state for instructor data
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    _fetchUserData(); // Fetch instructor data on initialization
   }
 
+  /// Fetches instructor details from Firestore using the email from classDoc
   Future<void> _fetchUserData() async {
     final data = widget.classDoc.data() as Map<String, dynamic>? ?? {};
     final email = data['created_by'] ?? '';
@@ -65,6 +68,7 @@ class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
     final price = data['price'];
     final imageBase64 = data['image_base64'] ?? '';
 
+    // Decode and display class image if available
     Image? classImage;
     try {
       String cleanBase64 = imageBase64.trim();
@@ -82,6 +86,7 @@ class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
       child: Icon(Icons.person, color: Colors.white),
     );
 
+    // If instructor data is loaded, display their name and profile image
     if (!loadingUser && userData != null) {
       final firstName = userData!['first_name'] ?? '';
       final lastName = userData!['last_name'] ?? '';
@@ -110,7 +115,7 @@ class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Bar
+            // Top app bar with gradient background
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: const BoxDecoration(
@@ -140,7 +145,7 @@ class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // Image Card
+                    // Class image display
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
@@ -153,7 +158,7 @@ class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Title
+                    // Class title
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -167,7 +172,7 @@ class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Instructor
+                    // Instructor details
                     Row(
                       children: [
                         profileImageWidget,
@@ -201,7 +206,7 @@ class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Date & Time Row
+                    // Date and time information
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -231,7 +236,7 @@ class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Price
+                    // Price display if available
                     if (price != null)
                       Container(
                         width: double.infinity,
@@ -253,7 +258,7 @@ class _SelfClassDetailScreenState extends State<SelfClassDetailScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Description
+                    // Description section
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),

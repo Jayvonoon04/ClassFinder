@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:classfinder_f/screens/create_profile.dart';
 import 'package:classfinder_f/screens/bottom_navigation_bar.dart';
 
+/// Login and Sign Up screen with Firebase Authentication
+/// Uses TabBar for toggling between Login and Sign Up forms.
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
 
@@ -15,15 +17,16 @@ class _LoginState extends State<Login> {
   final _loginFormKey = GlobalKey<FormState>();
   final _signUpFormKey = GlobalKey<FormState>();
 
+  // Controllers for login and sign up fields
   final loginEmailController = TextEditingController();
   final loginPasswordController = TextEditingController();
-
   final signUpEmailController = TextEditingController();
   final signUpPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
   bool isLoading = false;
 
+  /// Displays a snackbar with the provided error message
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
@@ -38,6 +41,7 @@ class _LoginState extends State<Login> {
     super.dispose();
   }
 
+  /// Reusable input decoration with icon and hint text
   InputDecoration inputDecoration(String hint, IconData icon) {
     return InputDecoration(
       prefixIcon: Icon(icon),
@@ -53,7 +57,7 @@ class _LoginState extends State<Login> {
       length: 2,
       child: Scaffold(
         body: SingleChildScrollView(
-          child: Container(
+          child: Padding(
             padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05),
             child: Column(
               children: [
@@ -66,6 +70,8 @@ class _LoginState extends State<Login> {
                   style: TextStyle(fontSize: 18),
                 ),
                 SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+
+                /// TabBar for toggling between Login and Sign Up
                 TabBar(
                   labelColor: Colors.black,
                   unselectedLabelColor: Colors.grey,
@@ -76,6 +82,8 @@ class _LoginState extends State<Login> {
                   ],
                 ),
                 SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+
+                /// TabBarView showing Login and Sign Up forms
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.65,
                   child: TabBarView(
@@ -90,11 +98,13 @@ class _LoginState extends State<Login> {
     );
   }
 
+  /// Login form widget
   Widget loginWidget() {
     return Form(
       key: _loginFormKey,
       child: Column(
         children: [
+          /// Email field
           TextFormField(
             controller: loginEmailController,
             decoration: inputDecoration('Enter your email', Icons.email),
@@ -105,6 +115,8 @@ class _LoginState extends State<Login> {
             },
           ),
           const SizedBox(height: 20),
+
+          /// Password field
           TextFormField(
             controller: loginPasswordController,
             obscureText: true,
@@ -115,7 +127,10 @@ class _LoginState extends State<Login> {
               return null;
             },
           ),
+
           const SizedBox(height: 10),
+
+          /// Forgot password button
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
@@ -136,7 +151,10 @@ class _LoginState extends State<Login> {
               child: const Text('Forgot password?'),
             ),
           ),
+
           const SizedBox(height: 20),
+
+          /// Login button
           ElevatedButton(
             onPressed: () async {
               if (!_loginFormKey.currentState!.validate()) return;
@@ -145,6 +163,8 @@ class _LoginState extends State<Login> {
                   email: loginEmailController.text.trim(),
                   password: loginPasswordController.text.trim(),
                 );
+
+                /// Navigate to BottomBarView after successful login
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => const BottomBarView()),
@@ -161,11 +181,13 @@ class _LoginState extends State<Login> {
     );
   }
 
+  /// Sign Up form widget
   Widget signUpWidget() {
     return Form(
       key: _signUpFormKey,
       child: Column(
         children: [
+          /// Email field
           TextFormField(
             controller: signUpEmailController,
             decoration: inputDecoration('Enter your email', Icons.email),
@@ -176,6 +198,8 @@ class _LoginState extends State<Login> {
             },
           ),
           const SizedBox(height: 20),
+
+          /// Password field
           TextFormField(
             controller: signUpPasswordController,
             obscureText: true,
@@ -187,6 +211,8 @@ class _LoginState extends State<Login> {
             },
           ),
           const SizedBox(height: 20),
+
+          /// Confirm password field
           TextFormField(
             controller: confirmPasswordController,
             obscureText: true,
@@ -197,7 +223,10 @@ class _LoginState extends State<Login> {
               return null;
             },
           ),
+
           const SizedBox(height: 20),
+
+          /// Sign Up button
           ElevatedButton(
             onPressed: () async {
               if (!_signUpFormKey.currentState!.validate()) return;
@@ -207,6 +236,8 @@ class _LoginState extends State<Login> {
                   email: signUpEmailController.text.trim(),
                   password: signUpPasswordController.text.trim(),
                 );
+
+                /// Navigate to Create Profile screen after successful sign up
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -219,6 +250,8 @@ class _LoginState extends State<Login> {
             child: const Text('Sign Up'),
           ),
           const SizedBox(height: 20),
+
+          /// Terms and policies notice
           const Text(
             'By signing up, you agree to our terms, data policy and cookies policy.',
             textAlign: TextAlign.center,

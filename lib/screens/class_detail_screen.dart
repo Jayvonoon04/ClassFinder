@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'checkout.dart';
 
+/// Displays detailed information for a single class,
+/// including image, instructor, description, date/time, and price,
+/// with the ability to proceed to checkout.
 class ClassDetailScreen extends StatefulWidget {
   final DocumentSnapshot classDoc;
 
@@ -15,19 +18,21 @@ class ClassDetailScreen extends StatefulWidget {
 }
 
 class _ClassDetailScreenState extends State<ClassDetailScreen> {
-  Map<String, dynamic>? userData;
-  bool loadingUser = true;
+  Map<String, dynamic>? userData; // Holds instructor's user data
+  bool loadingUser = true; // Indicates if instructor data is being loaded
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    _fetchUserData(); // Fetch instructor details on initialization
   }
 
+  /// Fetches instructor user data from Firestore based on the `created_by` email
   Future<void> _fetchUserData() async {
     final data = widget.classDoc.data() as Map<String, dynamic>? ?? {};
     final email = data['created_by'] ?? '';
     if (email.isEmpty) {
+      // No instructor email available
       setState(() {
         loadingUser = false;
       });
@@ -41,6 +46,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
           .limit(1)
           .get();
       if (query.docs.isNotEmpty) {
+        // Instructor found, store user data
         setState(() {
           userData = query.docs.first.data();
         });
@@ -68,7 +74,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     final price = data['price'];
     final imageBase64 = data['image_base64'] ?? '';
 
-    // Decode class image
+    /// Decode base64 image for class preview
     Image? classImage;
     try {
       String cleanBase64 = imageBase64.trim();
@@ -76,10 +82,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
       final bytes = base64Decode(cleanBase64);
       classImage = Image.memory(bytes, fit: BoxFit.cover);
     } catch (e) {
-      classImage = null;
+      classImage = null; // Use placeholder if decoding fails
     }
 
-    // Instructor display
+    /// Setup instructor display name and profile picture
     String instructorName = data['created_by'] ?? '';
     Widget profileImageWidget = const CircleAvatar(
       radius: 28,
@@ -116,7 +122,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Bar with Back Button and Title
+            /// Top Bar with back button and title
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -150,13 +156,14 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
               ),
             ),
 
+            /// Main content area
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Class Image Card with shadow and rounded corners
+                    /// Class image with rounded corners
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
@@ -179,7 +186,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Title
+                    /// Class title
                     Text(
                       title,
                       style: const TextStyle(
@@ -192,7 +199,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                     const SizedBox(height: 14),
 
-                    // Instructor Info with avatar
+                    /// Instructor info with profile image
                     Row(
                       children: [
                         profileImageWidget,
@@ -214,7 +221,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Description box with subtle shadow
+                    /// Description with styled container
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -240,7 +247,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                     const SizedBox(height: 30),
 
-                    // Date & Time info with icons and background highlight
+                    /// Date & time display with icons
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       decoration: BoxDecoration(
@@ -249,6 +256,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                       ),
                       child: Row(
                         children: [
+                          /// Date
                           Row(
                             children: [
                               const Icon(Icons.calendar_today, size: 20, color: Colors.blueAccent),
@@ -264,6 +272,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                             ],
                           ),
                           const SizedBox(width: 30),
+
+                          /// Time
                           Row(
                             children: [
                               const Icon(Icons.access_time, size: 20, color: Colors.blueAccent),
@@ -282,7 +292,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                       ),
                     ),
 
-                    // Price tag
+                    /// Price tag
                     if (price != null) ...[
                       const SizedBox(height: 30),
                       Container(
@@ -318,7 +328,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                     const SizedBox(height: 50),
 
-                    // Join Class Button with gradient and shadow
+                    /// Join Class button navigates to Checkout screen
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(

@@ -8,6 +8,9 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+/// Screen allowing logged-in users to create and upload a new class to Firestore.
+/// Includes image upload, title, description, date, time, and price input,
+/// storing the image as base64 in Firestore.
 class CreateClass extends StatefulWidget {
   const CreateClass({super.key});
 
@@ -16,6 +19,7 @@ class CreateClass extends StatefulWidget {
 }
 
 class _CreateClassState extends State<CreateClass> {
+  // Controllers for user input fields
   final TextEditingController dateController = TextEditingController();
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -23,9 +27,10 @@ class _CreateClassState extends State<CreateClass> {
   final TextEditingController endTimeController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
 
-  File? selectedImage;
-  bool isLoading = false;
+  File? selectedImage; // Holds the user-selected image file
+  bool isLoading = false; // Tracks loading state during upload
 
+  /// Allows the user to select an image from the gallery.
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
@@ -36,6 +41,7 @@ class _CreateClassState extends State<CreateClass> {
     }
   }
 
+  /// Opens the date picker and prevents selecting past dates.
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -57,6 +63,7 @@ class _CreateClassState extends State<CreateClass> {
     }
   }
 
+  /// Opens a time picker for the specified controller.
   Future<void> _pickTime({required TextEditingController controller}) async {
     final picked = await showTimePicker(
       context: context,
@@ -67,6 +74,7 @@ class _CreateClassState extends State<CreateClass> {
     }
   }
 
+  /// Parses a formatted time string into TimeOfDay.
   TimeOfDay? _parseTime(String formattedTime) {
     try {
       final time = TimeOfDay.fromDateTime(
@@ -78,7 +86,9 @@ class _CreateClassState extends State<CreateClass> {
     }
   }
 
+  /// Handles validation, data preparation, and upload to Firestore.
   Future<void> _submitClass() async {
+    // Validate empty fields
     if (titleController.text.trim().isEmpty ||
         descriptionController.text.trim().isEmpty ||
         dateController.text.trim().isEmpty ||
@@ -90,6 +100,7 @@ class _CreateClassState extends State<CreateClass> {
       return;
     }
 
+    // Validate price input
     double? price;
     try {
       price = double.parse(priceController.text.trim());
@@ -102,6 +113,7 @@ class _CreateClassState extends State<CreateClass> {
       return;
     }
 
+    // Validate that end time is after start time
     try {
       final startTime = TimeOfDay(
         hour: int.parse(startTimeController.text.split(":")[0]),
@@ -132,9 +144,11 @@ class _CreateClassState extends State<CreateClass> {
         return;
       }
 
+      // Convert image to base64 for Firestore storage
       final imageBytes = await selectedImage!.readAsBytes();
       final base64Image = base64Encode(imageBytes);
 
+      // Upload class data to Firestore
       await FirebaseFirestore.instance.collection('classes').add({
         'title': titleController.text.trim(),
         'description': descriptionController.text.trim(),
@@ -149,6 +163,7 @@ class _CreateClassState extends State<CreateClass> {
 
       _showSuccess("Class created successfully!");
 
+      // Reset fields after successful submission
       titleController.clear();
       descriptionController.clear();
       dateController.clear();
@@ -163,18 +178,21 @@ class _CreateClassState extends State<CreateClass> {
     }
   }
 
+  /// Shows a red snackbar with the error message.
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
+  /// Shows a green snackbar with the success message.
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
+  /// Consistent label widget with bold styling.
   Widget _buildLabel(String text) {
     return Text(
       text,

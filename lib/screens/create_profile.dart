@@ -4,8 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:classfinder_f/screens/bottom_navigation_bar.dart';
-import 'package:classfinder_f/screens/home_screen.dart';
 
+/// Screen for initial user profile creation after signup.
+/// Allows users to upload profile image, enter personal details, and save to Firestore.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -16,15 +17,17 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final formKey = GlobalKey<FormState>();
 
+  // Controllers for user inputs
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final mobileController = TextEditingController();
   final dobController = TextEditingController();
 
-  int selectedGender = -1;
+  int selectedGender = -1; // -1 = not selected, 0 = Male, 1 = Female
   bool isLoading = false;
   File? profileImage;
 
+  /// Opens the image picker for selecting a profile picture from the gallery.
   Future<void> imagePickDialog() async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: ImageSource.gallery);
@@ -36,6 +39,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// Opens a date picker for selecting date of birth.
   Future<void> _selectDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -48,6 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// Validates inputs, uploads user profile data to Firestore, and navigates to BottomBarView on success.
   Future<void> _submit() async {
     if (!formKey.currentState!.validate()) return;
 
@@ -70,6 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return;
       }
 
+      // Upload user profile data to Firestore
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'first_name': firstNameController.text.trim(),
         'last_name': lastNameController.text.trim(),
@@ -98,6 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// Shows a red snackbar with the provided error message.
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
@@ -105,6 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ));
   }
 
+  /// Shows a green snackbar with the provided success message.
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
@@ -127,6 +135,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 30),
+
+                /// Profile image picker with gradient border
                 InkWell(
                   onTap: imagePickDialog,
                   child: Container(
@@ -169,7 +179,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 30),
+
+                /// Input fields
                 _buildTextField(
                   controller: firstNameController,
                   hint: "First Name",
@@ -186,6 +199,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   inputType: TextInputType.phone,
                   validatorMsg: "Mobile number is required",
                 ),
+
+                /// Date of birth picker field
                 SizedBox(
                   height: 48,
                   child: TextFormField(
@@ -204,7 +219,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : null,
                   ),
                 ),
+
                 const SizedBox(height: 20),
+
+                /// Gender selection radio buttons
                 Row(
                   children: [
                     Expanded(
@@ -233,7 +251,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 20),
+
+                /// Submit button
                 ElevatedButton(
                   onPressed: _submit,
                   style: ElevatedButton.styleFrom(
@@ -242,12 +263,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: const Text("Save"),
                 ),
+
                 const SizedBox(height: 20),
+
+                /// Terms reminder
                 const Text(
                   'By signing up, you agree to our terms, Data policy and cookies policy',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12),
                 ),
+
                 const SizedBox(height: 30),
               ],
             ),
@@ -257,6 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Helper to build consistent rounded text fields with validation.
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
